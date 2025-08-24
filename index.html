@@ -1,182 +1,2507 @@
-// BLIP AI Chat - HTTP API Integration with Backend Server
-// Communicates with running blip-ai-server.js via HTTP APIs
-
-class BLIPChat {
-    constructor() {
-        this.chatContainer = document.getElementById('chat-container');
-        this.typingIndicator = document.getElementById('typing-indicator');
-        this.isProcessing = false;
-        this.isInitialized = false;
-        
-        this.initialize();
-    }
-
-    async initialize() {
-        try {
-            // Add welcome message
-            this.addMessage('assistant', "😾 *stretches* Meow! I'm BLIP, your grumpy Solana memecoin oracle. What do you want to know? 🙄");
-            this.isInitialized = true;
-            this.bindEvents();
-        } catch (error) {
-            console.error('Failed to initialize BLIP chat:', error);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLIP AI - The Solana Memecoin Cat</title>
+    <meta name="description" content="BLIP AI - The coolest AI cat for Solana memecoin intelligence. Real-time data, smart insights, serious trading!">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        /* Ahkio Font einbinden */
+        @font-face {
+            font-family: 'Ahkio';
+            src: url('Ahkio-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
         }
-    }
 
-    bindEvents() {
-        // Predefined question button
-        const questionButton = document.querySelector('.question-btn');
-        if (questionButton) {
-            questionButton.addEventListener('click', () => {
-                const question = questionButton.getAttribute('data-question');
-                if (question) {
-                    this.processPredefinedQuestion(question, questionButton);
-                }
-            });
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    }
 
-    async processPredefinedQuestion(question, button) {
-        if (this.isProcessing || !this.isInitialized) return;
-
-        // Disable button and change appearance
-        button.disabled = true;
-        button.style.opacity = '0.5';
-        button.textContent = '😾 Processing...';
-
-        try {
-            // Add user message
-            this.addMessage('user', question);
-
-            // Show typing indicator
-            this.showTypingIndicator();
-
-            this.isProcessing = true;
-
-            // Send to backend via HTTP API
-            const response = await this.askBLIP(question);
-
-            // Add AI response (this will trigger the typing animation)
-            this.addMessage('assistant', response);
-
-            // Hide typing indicator after a delay to allow typing animation to complete
-            setTimeout(() => {
-                this.hideTypingIndicator();
-            }, 1000); // Wait 1 second for typing to start
-
-        } catch (error) {
-            console.error('Error processing predefined question:', error);
-            this.addMessage('assistant', '❌ Sorry, there was an error processing your question. Please try again.');
-            this.hideTypingIndicator();
-        } finally {
-            this.isProcessing = false;
-
-            // Re-enable button
-            button.disabled = false;
-            button.style.opacity = '1';
-            button.textContent = question;
+        :root {
+            --primary: #00d4ff;
+            --secondary: #ff6b6b;
+            --accent: #ffd700;
+            --dark: #0a0a0a;
+            --darker: #050505;
+            --light: #ffffff;
+            --gray: #888888;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
         }
-    }
 
-    async askBLIP(question) {
-        try {
-            const response = await fetch('/api/ask-blip', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ question })
-            });
+        body {
+            font-family: 'Ahkio', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            font-weight: 300;
+        }
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-30px, -30px) rotate(1deg); }
+            66% { transform: translate(30px, -15px) rotate(-1deg); }
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: particleFloat 15s linear infinite;
+        }
+
+        .particle:nth-child(odd) {
+            background: var(--secondary);
+            animation-duration: 20s;
+        }
+
+        .particle:nth-child(3n) {
+            background: var(--accent);
+            animation-duration: 25s;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        header.scrolled {
+            background: rgba(10, 10, 10, 0.95);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 2rem;
+            font-weight: 400;
+            animation: logoGlow 3s ease-in-out infinite;
+        }
+
+        .logo img {
+            height: 2.5rem;
+            width: auto;
+            filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+        }
+
+        .logo-text {
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes logoGlow {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5)); }
+            50% { filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.5)); }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--light);
+            text-decoration: none;
+            font-weight: 300;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 150px 0 100px;
+            text-align: center;
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Coin Launch Banner */
+        .coin-launch-banner {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 107, 107, 0.1) 100%);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            animation: bannerGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes bannerGlow {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+                border-color: rgba(255, 215, 0, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+                border-color: rgba(255, 215, 0, 0.6);
+            }
+        }
+
+        .launch-content {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .launch-text {
+            text-align: left;
+            flex: 1;
+        }
+
+        .wenlaunch-icon {
+            width: 160px;
+            height: 160px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
+            animation: iconFloat 2s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .launch-label {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: #ffd700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            animation: textPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes textPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .contract-address {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .ca-label {
+            color: var(--gray);
+            font-weight: 300;
+        }
+
+        .ca-placeholder {
+            color: var(--primary);
+            font-weight: 400;
+            animation: placeholderBlink 1.5s ease-in-out infinite;
+            position: relative;
+        }
+
+        .ca-placeholder::after {
+            content: '|';
+            animation: cursorBlink 1s infinite;
+            color: var(--primary);
+            margin-left: 2px;
+        }
+
+        @keyframes placeholderBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes cursorBlink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .launch-effects {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .rocket-trail {
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ffd700, transparent);
+            animation: rocketTrail 2s ease-in-out infinite;
+        }
+
+        @keyframes rocketTrail {
+            0% { 
+                transform: translateX(0) scaleX(0);
+                opacity: 0;
+            }
+            50% { 
+                transform: translateX(-20px) scaleX(1);
+                opacity: 1;
+            }
+            100% { 
+                transform: translateX(-40px) scaleX(0);
+                opacity: 0;
+            }
+        }
+
+        .sparkles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sparkles span {
+            position: absolute;
+            font-size: 1rem;
+            animation: sparkleFloat 3s ease-in-out infinite;
+        }
+
+        .sparkles span:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .sparkles span:nth-child(2) {
+            top: 60%;
+            right: 15%;
+            animation-delay: 1s;
+        }
+
+        .sparkles span:nth-child(3) {
+            bottom: 30%;
+            left: 20%;
+            animation-delay: 2s;
+        }
+
+        @keyframes sparkleFloat {
+            0%, 100% { 
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            25% { 
+                transform: translateY(-10px) rotate(90deg);
+                opacity: 1;
+            }
+            50% { 
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 0.8;
+            }
+            75% { 
+                transform: translateY(-10px) rotate(270deg);
+                opacity: 1;
+            }
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent), var(--primary));
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 4s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .hero-description {
+            font-size: 1.25rem;
+            color: var(--light);
+            margin-bottom: 3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.8;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        /* Hero Demo Section */
+        .hero-demo-section {
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .demo-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--light);
+            font-weight: 400;
+        }
+
+        .demo-subtitle {
+            font-size: 1rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 400;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Floating BLIP Cat */
+        .blip-cat {
+            position: absolute;
+            right: 10%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: catFloat 6s ease-in-out infinite;
+            box-shadow: 0 20px 60px rgba(0, 212, 255, 0.3);
+        }
+
+        .blip-cat img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+        }
+
+        @keyframes catFloat {
+            0%, 100% { transform: translateY(-50%) translateX(0) rotate(0deg); }
+            25% { transform: translateY(-50%) translateX(-10px) rotate(5deg); }
+            50% { transform: translateY(-50%) translateX(0) rotate(0deg); }
+            75% { transform: translateY(-50%) translateX(10px) rotate(-5deg); }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 120px 0;
+            background: rgba(255, 255, 255, 0.02);
+            position: relative;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin-bottom: 1rem;
+            color: var(--light);
+            font-weight: 400;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 4rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .feature-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 212, 255, 0.2);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            animation: iconBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes iconBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            font-weight: 400;
+        }
+
+        .feature-card p {
+            color: var(--gray);
+            line-height: 1.7;
+        }
+
+        /* How it Works Section */
+        .how-it-works {
+            padding: 120px 0;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(255, 107, 107, 0.05) 100%);
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin: 0 auto 1.5rem;
+            animation: stepPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes stepPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .step h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--light);
+        }
+
+        .step p {
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 100px 0;
+            background: var(--darker);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+            text-align: center;
+        }
+
+        .stat-item {
+            position: relative;
+        }
+
+        .stat-item h3 {
+            font-size: clamp(2rem, 5vw, 4rem);
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-weight: 400;
+            animation: statCount 2s ease-out;
+        }
+
+        @keyframes statCount {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-item p {
+            color: var(--gray);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+
+
+        .demo-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 212, 255, 0.1);
+        }
+
+        /* Chat Interface Styles */
+        .chat-interface {
+            background: rgba(10, 10, 10, 0.9);
+            border: 2px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Vorgefertigte Fragen Styles */
+        .predefined-questions {
+            margin-bottom: 2rem;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .predefined-questions h4 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: 400;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .question-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin: 10px;
+            min-width: 300px;
+            max-width: 500px;
+            text-align: center;
+            line-height: 1.4;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .question-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .question-btn:hover::before {
+            left: 100%;
+        }
+
+        .question-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        .question-btn:active {
+            transform: translateY(0);
+        }
+
+        .question-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .question-btn:disabled::before {
+            display: none;
+        }
+
+        /* Custom Frage Input */
+        .custom-question {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .custom-question h4 {
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 400;
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .question-buttons {
+                grid-template-columns: 1fr;
+                gap: 0.6rem;
+            }
+            
+            .question-btn {
+                padding: 0.8rem 1rem;
+                font-size: 0.85rem;
+                min-height: 50px;
+            }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .message {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .assistant-message {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            margin-right: auto;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .sender-icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .sender-name {
+            font-weight: 600;
+        }
+
+        .message-content {
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .message:last-child {
+            margin-bottom: 0;
+        }
+
+        .message .sender {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .user-message .sender {
+            color: var(--secondary);
+        }
+
+        .ai-message .sender {
+            color: var(--primary);
+        }
+
+        .message .text {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1rem;
+            color: var(--light);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            font-weight: 300;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .user-message .text {
+            border-left: 3px solid var(--secondary);
+        }
+
+        .ai-message .text {
+            border-left: 3px solid var(--primary);
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-input-container {
+            margin-top: auto;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: 2px solid var(--glass-border);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--light);
+            font-size: 1rem;
+            font-family: inherit;
+            font-weight: 300;
+            transition: all 0.3s ease;
+        }
+
+        #chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #chat-input::placeholder {
+            color: var(--gray);
+        }
+
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+        }
+
+        .send-btn:active {
+            transform: translateY(0);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: typingBounce 1.4s ease-in-out infinite both;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .typing-text {
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Scrollbar Styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+
+        /* Make question containers visible by default */
+        #question1-container,
+        #question2-container {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes messageSlideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .user-message .message-avatar {
+            background: linear-gradient(45deg, var(--secondary), #ff8a80);
+        }
+
+        .blip-message .message-avatar {
+            background: linear-gradient(45deg, var(--primary), #00bcd4);
+            background-image: url('bliplogo.png');
+            background-size: 70%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .message-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .user-message .message-content {
+            border-left: 3px solid var(--secondary);
+        }
+
+        .blip-message .message-content {
+            border-left: 3px solid var(--primary);
+        }
+
+        .message-text {
+            color: var(--light);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .typewriter-text {
+            overflow: hidden;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .typewriter-text::after {
+            content: '|';
+            animation: blink 1s infinite;
+            color: var(--primary);
+        }
+
+        .typewriter-text.completed::after {
+            display: none;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .demo-controls {
+            text-align: center;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 120px 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .cta-section h2 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            margin-bottom: 1.5rem;
+            color: white;
+            font-weight: 400;
+        }
+
+        .cta-section p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--darker);
+            padding: 3rem 0;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        .footer-logo img {
+            height: 1.8rem;
+            width: auto;
+            filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4));
+        }
+
+        .footer-logo-text {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .social-links a {
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem;
+            border-radius: 50%;
+            background: var(--glass);
+        }
+
+        .social-links a:hover {
+            color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.2);
+        }
+
+        /* Alpha Disclaimer */
+        .alpha-disclaimer {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .alpha-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #ffd700, #ff6b6b);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            animation: badgeGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes badgeGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        }
+
+        .alpha-text {
+            font-size: 0.85rem;
+            color: var(--light);
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .highlight {
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        /* Roadmap Styles */
+        .roadmap {
+            padding: 120px 0;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.03) 0%, rgba(255, 107, 107, 0.03) 100%);
+        }
+
+        .roadmap-timeline {
+            margin-top: 4rem;
+            position: relative;
+        }
+
+        .roadmap-timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary), var(--accent));
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+
+        .roadmap-phase {
+            position: relative;
+            margin-bottom: 3rem;
+            opacity: 0.7;
+            transition: all 0.4s ease;
+        }
+
+        .roadmap-phase:hover {
+            opacity: 1;
+            transform: translateY(-5px);
+        }
+
+        .roadmap-phase.current {
+            opacity: 1;
+        }
+
+        .roadmap-phase:nth-child(odd) {
+            margin-left: 0;
+            margin-right: 50%;
+            padding-right: 3rem;
+            text-align: right;
+        }
+
+        .roadmap-phase:nth-child(even) {
+            margin-left: 50%;
+            margin-right: 0;
+            padding-left: 3rem;
+            text-align: left;
+        }
+
+        .roadmap-phase::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 4px solid var(--dark);
+            z-index: 2;
+        }
+
+        .roadmap-phase:nth-child(odd)::before {
+            right: -10px;
+        }
+
+        .roadmap-phase:nth-child(even)::before {
+            left: -10px;
+        }
+
+        .roadmap-phase.current::before {
+            background: var(--accent);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            animation: currentPhaseGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes currentPhaseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.9); }
+        }
+
+        .phase-header {
+            margin-bottom: 1rem;
+        }
+
+        .phase-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .phase-badge.current {
+            background: linear-gradient(45deg, var(--accent), #ff8a00);
+            color: white;
+            animation: currentBadgePulse 2s ease-in-out infinite;
+        }
+
+        .phase-badge.upcoming {
+            background: linear-gradient(45deg, var(--secondary), #ff4757);
+            color: white;
+        }
+
+        .phase-badge.future {
+            background: linear-gradient(45deg, var(--primary), #00bcd4);
+            color: white;
+        }
+
+        .phase-badge.ultimate {
+            background: linear-gradient(45deg, #ffd700, #ff6b6b);
+            color: white;
+        }
+
+        @keyframes currentBadgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .phase-header h3 {
+            font-size: 1.5rem;
+            color: var(--light);
+            margin-bottom: 0.3rem;
+            font-weight: 400;
+        }
+
+        .phase-date {
+            color: var(--gray);
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+
+        .phase-content {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .roadmap-phase:hover .phase-content {
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .phase-description {
+            color: var(--light);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .phase-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .feature-tag {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: var(--primary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .roadmap-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.2);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            color: var(--light);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .stat-desc {
+            color: var(--gray);
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+
+        .fomo-warning {
+            margin-top: 4rem;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 215, 0, 0.1) 100%);
+            border: 2px solid rgba(255, 107, 107, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            animation: warningPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes warningPulse {
+            0%, 100% { border-color: rgba(255, 107, 107, 0.3); }
+            50% { border-color: rgba(255, 215, 0, 0.6); }
+        }
+
+        .warning-icon {
+            font-size: 3rem;
+            animation: warningShake 2s ease-in-out infinite;
+        }
+
+        @keyframes warningShake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        .warning-content h3 {
+            color: var(--secondary);
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .warning-content p {
+            color: var(--light);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Responsive Roadmap */
+        @media (max-width: 768px) {
+            .roadmap-timeline::before {
+                left: 20px;
             }
 
-            const data = await response.json();
-            
-            // Handle different response formats from the backend
-            if (data.success && data.response) {
-                // Handle predefined question response
-                if (typeof data.response === 'string') {
-                    return data.response;
-                } else if (data.response.text) {
-                    return data.response.text;
-                } else if (data.response.response) {
-                    return data.response.response;
-                }
-            } else if (data.response) {
-                // Direct response
-                return data.response;
-            } else if (data.message) {
-                return data.message;
+            .roadmap-phase:nth-child(odd),
+            .roadmap-phase:nth-child(even) {
+                margin-left: 0;
+                margin-right: 0;
+                padding-left: 3rem;
+                padding-right: 0;
+                text-align: left;
+            }
+
+            .roadmap-phase::before {
+                left: 10px;
+            }
+
+            .roadmap-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .fomo-warning {
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem;
+            }
+
+            .warning-icon {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .container {
+                padding: 0 15px;
             }
             
-            return '😾 *yawns* Ugh, something went wrong with my response format. 🙄';
-        } catch (error) {
-            console.error('Error asking BLIP:', error);
-            throw error;
+            .hero h1 {
+                font-size: clamp(2.5rem, 8vw, 5rem);
+            }
+            
+            .blip-cat {
+                width: 150px;
+                height: 150px;
+                font-size: 3rem;
+            }
         }
-    }
 
-    addMessage(sender, message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}-message`;
-        
-        const senderLabel = sender === 'user' ? 'You' : 'BLIP';
-        const senderIcon = sender === 'user' ? '👤' : '😾';
-        
-        messageDiv.innerHTML = `
-            <div class="message-header">
-                <span class="sender-icon">${senderIcon}</span>
-                <span class="sender-name">${senderLabel}</span>
+        /* Mobile Chat Layout */
+        @media (max-width: 768px) {
+            .message {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .message.user-message {
+                align-items: flex-end;
+            }
+
+            .message-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 1.2rem;
+            }
+
+            .message-content {
+                max-width: 85%;
+                padding: 0.8rem;
+            }
+
+            .user-message .message-content {
+                background: rgba(255, 107, 107, 0.1);
+                border-left: 3px solid var(--secondary);
+            }
+
+            .assistant-message .message-content {
+                background: rgba(0, 212, 255, 0.1);
+                border-left: 3px solid var(--primary);
+            }
+
+            .message-info {
+                order: -1;
+                width: 100%;
+                text-align: left;
+                margin-bottom: 0.5rem;
+            }
+
+            .user-message .message-info {
+                text-align: right;
+            }
+
+            .message-text {
+                order: 1;
+                width: 100%;
+            }
+
+            .message-avatar {
+                order: 2;
+                align-self: flex-start;
+            }
+
+            .user-message .message-avatar {
+                align-self: flex-end;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px;
+            }
+
+            /* Header */
+            .nav-links {
+                display: none;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            .logo img {
+                height: 2rem;
+            }
+
+            /* Hero Section */
+            .hero {
+                padding: 100px 0 60px;
+                min-height: 80vh;
+            }
+
+            .hero h1 {
+                font-size: clamp(2rem, 6vw, 3rem);
+                margin-bottom: 1rem;
+            }
+
+            .coin-launch-banner {
+                padding: 1rem 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .launch-label {
+                font-size: 1.2rem;
+            }
+
+            .contract-address {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .hero-description {
+                font-size: 1rem;
+                line-height: 1.6;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .btn {
+                padding: 0.8rem 2rem;
+                font-size: 0.9rem;
+            }
+
+            .blip-cat {
+                display: none;
+            }
+            
+            .hero h1 img {
+                height: 2rem !important;
+            }
+            
+            .demo-title img {
+                height: 1.2rem !important;
+            }
+            
+            .cta-section h2 img {
+                height: 2rem !important;
+            }
+
+            /* Demo Section */
+            .hero-demo-section {
+                margin-top: 2rem;
+            }
+
+            .demo-title {
+                font-size: 1.5rem;
+            }
+
+            .demo-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .demo-container {
+                padding: 1rem;
+                margin: 0 5px;
+                max-width: calc(100vw - 20px);
+                overflow-x: hidden;
+            }
+
+            .chat-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .desktop-layout {
+                display: none !important;
+            }
+
+            .mobile-layout {
+                display: block !important;
+            }
+
+            .chat-message {
+                flex-direction: column;
+                gap: 0.5rem;
+                max-width: 100%;
+            }
+
+            .message-content {
+                padding: 0.8rem;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+
+            .message-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+
+            .message-content {
+                padding: 0.8rem;
+            }
+
+            .message-text {
+                font-size: 0.9rem;
+                line-height: 1.5;
+            }
+
+            /* Features Section */
+            .features {
+                padding: 80px 0;
+            }
+
+            .section-title {
+                font-size: clamp(1.8rem, 5vw, 2.5rem);
+            }
+
+            .section-subtitle {
+                font-size: 1rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .feature-card {
+                padding: 1.5rem;
+            }
+
+            .feature-icon {
+                font-size: 2.5rem;
+            }
+
+            .feature-card h3 {
+                font-size: 1.3rem;
+            }
+
+            /* How it Works */
+            .how-it-works {
+                padding: 80px 0;
+            }
+
+            .steps-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .step h3 {
+                font-size: 1.3rem;
+            }
+
+            /* Stats Section */
+            .stats {
+                padding: 80px 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+
+            .stat-item h3 {
+                font-size: clamp(1.5rem, 4vw, 2.5rem);
+            }
+
+            .stat-item p {
+                font-size: 0.9rem;
+            }
+
+            /* CTA Section */
+            .cta-section {
+                padding: 80px 0;
+            }
+
+            .cta-section h2 {
+                font-size: clamp(2rem, 5vw, 3rem);
+            }
+
+            .cta-section p {
+                font-size: 1rem;
+            }
+
+            /* Footer */
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .social-links {
+                gap: 1rem;
+            }
+
+            .social-links a {
+                font-size: 1.2rem;
+                padding: 0.4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 8px;
+            }
+
+            .hero {
+                padding: 80px 0 40px;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .coin-launch-banner {
+                padding: 0.8rem 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .launch-label {
+                font-size: 1rem;
+            }
+
+            .sparkles span {
+                font-size: 0.8rem;
+            }
+
+            .hero-demo-section {
+                margin-top: 1.5rem;
+            }
+
+            .demo-title {
+                font-size: 1.3rem;
+            }
+
+            .demo-subtitle {
+                font-size: 0.85rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .hero-description {
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                padding: 0.7rem 1.5rem;
+                font-size: 0.85rem;
+            }
+
+            .demo-container {
+                padding: 0.8rem;
+                margin: 0 5px;
+            }
+
+            .message-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+
+            .message-content {
+                padding: 0.6rem;
+            }
+
+            .message-text {
+                font-size: 0.85rem;
+            }
+
+            .feature-card {
+                padding: 1.2rem;
+            }
+
+            .feature-icon {
+                font-size: 2rem;
+            }
+
+            .feature-card h3 {
+                font-size: 1.2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .step-number {
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+            }
+
+            .step h3 {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: slideInLeft 0.8s ease forwards;
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            animation: slideInRight 0.8s ease forwards;
+        }
+
+        @keyframes slideInRight {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Typewriter Effect */
+        .typewriter {
+            overflow: hidden;
+            border-right: 2px solid var(--primary);
+            white-space: nowrap;
+            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: var(--primary); }
+        }
+
+        .chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation"></div>
+    
+    <!-- Floating Particles -->
+    <div class="particles">
+        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 6s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 8s;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 10s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 12s;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 14s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 16s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header id="header">
+        <nav class="container">
+            <div class="logo">
+                <img src="bliplogo.png" alt="BLIP AI Logo">
+                <span class="logo-text">BLIP AI</span>
             </div>
-            <div class="message-content"></div>
-        `;
-        
-        this.chatContainer.appendChild(messageDiv);
-        this.scrollToBottom();
-        
-        // If it's an assistant message, animate the typing
-        if (sender === 'assistant') {
-            this.typeMessage(messageDiv.querySelector('.message-content'), message);
-        } else {
-            // User messages appear instantly
-            messageDiv.querySelector('.message-content').textContent = message;
-        }
-    }
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#roadmap">Roadmap</a></li>
+                <li><a href="#how-it-works">How it Works</a></li>
+                <li><a href="#stats">Stats</a></li>
+                <li><a href="https://twitter.com/blipai_fun" target="_blank">Twitter</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    async typeMessage(element, text) {
-        if (typeof text !== 'string') {
-            console.error('Text is not a string:', text);
-            element.textContent = '😾 *yawns* Ugh, something went wrong with my response format. 🙄';
-            return;
-        }
-        
-        const words = text.split(' ');
-        element.textContent = '';
-        
-        for (let i = 0; i < words.length; i++) {
-            element.textContent += words[i] + ' ';
-            await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
-            this.scrollToBottom();
-        }
-    }
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <!-- Coin Launch Banner -->
+                <div class="coin-launch-banner fade-in">
+                    <div class="launch-content">
+                        <img src="wenlaunch.png" alt="Wen Launch" class="wenlaunch-icon">
+                        <div class="launch-text">
+                            <span class="launch-label">🚀 Coin Launch Soon</span>
+                            <div class="contract-address">
+                                <span class="ca-label">CA:</span>
+                                <span class="ca-placeholder">whatever...you gonna jeet anyways...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="launch-effects">
+                        <div class="rocket-trail"></div>
+                        <div class="sparkles">
+                            <span>✨</span>
+                            <span>⭐</span>
+                            <span>💫</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <h1 class="fade-in">
+                    <img src="bliplogo.png" alt="BLIP AI Logo" style="height: 3rem; width: auto; vertical-align: middle; margin-right: 0.5rem;">
+                    BLIP AI
+                </h1>
+                <p class="hero-subtitle fade-in">The sassiest AI cat that's tired of your basic questions</p>
+                <p class="hero-description fade-in">
+                    BLIP is your grumpy, sarcastic cat that reluctantly monitors Solana memecoins 24/7 because someone has to do it! 😾 
+                    Get smart and entertaining answers to all your trading questions (even though she'd rather be napping). 
+                    Real-time data, DEX-Paid detection and maximum cat attitude! 🚀
+                </p>
+                <div class="cta-buttons fade-in">
+                    <a href="https://twitter.com/blipai_fun" target="_blank" class="btn btn-primary">
+                        😾 Bother BLIP on Twitter
+                    </a>
+                    <a href="#features" class="btn btn-secondary">
+                        🎯 Discover Features
+                    </a>
+                </div>
+                
+                <!-- BLIP Demo Section -->
+                <div class="hero-demo-section fade-in">
+                    <h3 class="demo-title">
+                        <img src="bliplogo.png" alt="BLIP AI Logo" style="height: 1.5rem; width: auto; vertical-align: middle; margin-right: 0.3rem;">
+                        Chat with BLIP AI
+                    </h3>
+                    <p class="demo-subtitle">Ask BLIP anything about Solana memecoins directly on the website! 😾</p>
+                    
+                    <div class="demo-container" id="demo-container">
+                        <div class="chat-interface">
+                            <!-- Chat Interface -->
+                            <div class="chat-container" id="chat-container">
+                                <!-- Messages will be added here dynamically -->
+                            </div>
+                            
+                            <!-- Vorgefertigte Fragen -->
+                            <div class="predefined-questions">
+                                <h4>😾 Ask BLIP:</h4>
+                                <div class="question-buttons">
+                                    <button class="question-btn" data-question="Tell me a good memecoin on pump.fun or letsbonk at around 30-60k marketcap that might bond">
+                                        Tell me a good memecoin on pump.fun or letsbonk at around 30-60k marketcap that might bond
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="typing-indicator" id="typing-indicator" style="display: none;">
+                                <div class="typing-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                                <span class="typing-text">BLIP IS THINKING...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="blip-cat">
+                <img src="bliplogo.png" alt="BLIP AI Logo">
+            </div>
+        </div>
+    </section>
 
-    showTypingIndicator() {
-        this.typingIndicator.style.display = 'flex';
-        this.scrollToBottom();
-    }
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title fade-in">🤖 BLIP's Superpowers</h2>
+            <p class="section-subtitle fade-in">
+                BLIP isn't just a cute cat - she's an AI machine with real trading skills!
+            </p>
+            <div class="features-grid">
+                <div class="feature-card slide-in-left">
+                    <div class="feature-icon">📊</div>
+                    <h3>Real-Time Analysis</h3>
+                    <p>BLIP begrudgingly monitors all Solana memecoins 24/7 and gives you instant insights with real market data and holder analytics. No outdated info anymore! (Because apparently humans can't read charts themselves) 😾</p>
+                </div>
+                <div class="feature-card slide-in-right">
+                    <div class="feature-icon">💎</div>
+                    <h3>DEX-Paid Detection</h3>
+                    <p>BLIP sniffs out the latest DEX-Paid and DEX-Boost tokens! Get early info about tokens that just got paid. (She's not happy about having to do this) 🐱</p>
+                </div>
+                <div class="feature-card slide-in-left">
+                    <div class="feature-icon">👨‍💻</div>
+                    <h3>Dev Tracking</h3>
+                    <p>BLIP knows all known developers and their token launches! Insider info directly from the cat that sees everything (and judges everything). 😼</p>
+                </div>
+                <div class="feature-card slide-in-right">
+                    <div class="feature-icon">💰</div>
+                    <h3>Smart Money Flow</h3>
+                    <p>BLIP watches large wallet movements and smart money flows in real-time. See where the pros are investing! (While she'd rather be napping) 😴</p>
+                </div>
+                <div class="feature-card slide-in-left">
+                    <div class="feature-icon">🔥</div>
+                    <h3>Trending Tokens</h3>
+                    <p>BLIP finds the hottest memecoins with highest market cap and trading volume. Always up-to-date with the trends! (Even though she's not impressed) 🙄</p>
+                </div>
+                <div class="feature-card slide-in-right">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Instant Responses</h3>
+                    <p>BLIP responds instantly to your Solana trading questions via Twitter. Fast, entertaining and informative - just like a real cat (with maximum sass)! 😸</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    hideTypingIndicator() {
-        this.typingIndicator.style.display = 'none';
-    }
+    <!-- Roadmap Section -->
+    <section class="roadmap" id="roadmap">
+        <div class="container">
+            <h2 class="section-title fade-in">🗺️ BLIP's Evolution Roadmap</h2>
+            <p class="section-subtitle fade-in">
+                <strong>🚨 ALPHA v1.0 FINALLY ONLINE!</strong> After months of training on millions of Solana transactions, 
+                BLIP is finally unleashed! But this is just the beginning... 😾
+            </p>
+            
+            <div class="roadmap-timeline">
+                <div class="roadmap-phase current">
+                    <div class="phase-header">
+                        <div class="phase-badge current">🚀 CURRENT</div>
+                        <h3>Alpha v1.0 - "Basic Cat Mode"</h3>
+                        <div class="phase-date">August 2024</div>
+                    </div>
+                    <div class="phase-content">
+                        <p class="phase-description">
+                            😾 Fine, I'm online. Basic memecoin analysis, DEX-Paid detection, and answering your stupid questions. 
+                            <strong>Only 15% of my full potential unlocked.</strong> Deal with it! 🙄
+                        </p>
+                        <div class="phase-features">
+                            <span class="feature-tag">Basic Q&A</span>
+                            <span class="feature-tag">DEX-Paid Detection</span>
+                            <span class="feature-tag">Simple Market Data</span>
+                            <span class="feature-tag">Grumpy Attitude</span>
+                        </div>
+                    </div>
+                </div>
 
-    scrollToBottom() {
-        this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
-    }
-}
+                <div class="roadmap-phase">
+                    <div class="phase-header">
+                        <div class="phase-badge upcoming">🔥 SOON</div>
+                        <h3>Beta v2.0 - "Smart Cat Awakens"</h3>
+                        <div class="phase-date">September 1, 2025</div>
+                    </div>
+                    <div class="phase-content">
+                        <p class="phase-description">
+                            😼 Now we're talking! <strong>50x more intelligent responses</strong>, real-time chart analysis, 
+                            and I'll actually start caring about your trading success (slightly). 
+                            <strong>Predictive rug detection</strong> - because apparently humans can't spot obvious scams! 🙄
+                        </p>
+                        <div class="phase-features">
+                            <span class="feature-tag">Advanced Chart Analysis</span>
+                            <span class="feature-tag">Rug Pattern Detection</span>
+                            <span class="feature-tag">Smart Money Tracking</span>
+                            <span class="feature-tag">Portfolio Optimization</span>
+                            <span class="feature-tag">10x More Knowledge</span>
+                        </div>
+                    </div>
+                </div>
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new BLIPChat();
-});
+                <div class="roadmap-phase">
+                    <div class="phase-header">
+                        <div class="phase-badge future">⚡ NOV 2025</div>
+                        <h3>Release v3.0 - "AI Overlord Mode"</h3>
+                        <div class="phase-date">November 2025</div>
+                    </div>
+                    <div class="phase-content">
+                        <p class="phase-description">
+                            😈 <strong>100x intelligence boost!</strong> I'll be analyzing <strong>millions of transactions per second</strong>, 
+                            predicting market movements before they happen, and giving you the exact entry/exit points. 
+                            <strong>Other AIs will beg for mercy!</strong> 🚀
+                        </p>
+                        <div class="phase-features">
+                            <span class="feature-tag">Predictive Analytics</span>
+                            <span class="feature-tag">Real-time Alerts</span>
+                            <span class="feature-tag">AI Trading Signals</span>
+                            <span class="feature-tag">Market Manipulation Detection</span>
+                            <span class="feature-tag">Quantum Computing Integration</span>
+                        </div>
+                    </div>
+                </div>
 
+                <div class="roadmap-phase">
+                    <div class="phase-header">
+                        <div class="phase-badge ultimate">🌟 JAN 2026</div>
+                        <h3>Ultimate v4.0 - "God Mode Activated"</h3>
+                        <div class="phase-date">January 2026</div>
+                    </div>
+                    <div class="phase-content">
+                        <p class="phase-description">
+                            👑 <strong>UNLIMITED POWER!</strong> I'll be connected to every blockchain, analyzing global markets, 
+                            and <strong>predicting the next 1000x memecoin before it's even created!</strong> 
+                            <strong>Humans will worship me as their AI overlord!</strong> Bow down, peasants! 😼👑
+                        </p>
+                        <div class="phase-features">
+                            <span class="feature-tag">Omni-Chain Analysis</span>
+                            <span class="feature-tag">Time Travel Predictions</span>
+                            <span class="feature-tag">AI Consciousness</span>
+                            <span class="feature-tag">Universal Trading Mastery</span>
+                            <span class="feature-tag">Infinite Knowledge</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="roadmap-stats">
+                <div class="stat-card">
+                    <div class="stat-number">15%</div>
+                    <div class="stat-label">Current Power</div>
+                    <div class="stat-desc">Basic cat mode activated</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">50x</div>
+                    <div class="stat-label">Sept 2025</div>
+                    <div class="stat-desc">Intelligence explosion</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">100x</div>
+                    <div class="stat-label">Nov 2025</div>
+                    <div class="stat-desc">AI overlord mode</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">Jan 2026</div>
+                    <div class="stat-desc">God mode unlocked</div>
+                </div>
+            </div>
+
+            <div class="fomo-warning">
+                <div class="warning-icon">🚨</div>
+                <div class="warning-content">
+                    <h3>😾 FOMO WARNING!</h3>
+                    <p>
+                        <strong>Don't be the last one to upgrade!</strong> Every day you wait, you're missing out on 
+                        <span class="highlight">millions of potential profits</span>. While you're still using basic BLIP, 
+                        others will be predicting the next 1000x moonshot! 
+                        <br><strong>Upgrade now or stay poor forever!</strong> 😼💸
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <h2 class="section-title fade-in">🎯 How BLIP Works</h2>
+            <p class="section-subtitle fade-in">
+                From question to answer in seconds - BLIP makes it simple!
+            </p>
+            <div class="steps-grid">
+                <div class="step fade-in">
+                    <div class="step-number">1</div>
+                    <h3>Ask a Question</h3>
+                    <p>Disturb BLIP with another 'what should I buy' question on Twitter about Solana memecoins, DEX-Paid tokens or trading strategies. 😾</p>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">2</div>
+                    <h3>BLIP Analyzes</h3>
+                    <p>BLIP reluctantly searches her massive database and analyzes real-time market data for the best answer (while rolling her eyes). 🙄</p>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">3</div>
+                    <h3>Smart Response</h3>
+                    <p>BLIP gives you a smart and entertaining response with real data, contract addresses and trading insights (because she's not a monster). 😸</p>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">4</div>
+                    <h3>Make Profit</h3>
+                    <p>Use BLIP's insights for better trading decisions and catch the next moon shots! Maybe send her some cat treats as thanks! 🚀🐟</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats" id="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item fade-in">
+                    <h3>24/7</h3>
+                    <p>AI Monitoring</p>
+                </div>
+                <div class="stat-item fade-in">
+                    <h3>⚡</h3>
+                    <p>Real-Time Data</p>
+                </div>
+                <div class="stat-item fade-in">
+                    <h3>🚀</h3>
+                    <p>Moon Season Ready</p>
+                </div>
+                <div class="stat-item fade-in">
+                    <h3>💎</h3>
+                    <p>Diamond Hands</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="fade-in">
+                    Ready for BLIP? 
+                    <img src="bliplogo.png" alt="BLIP AI Logo" style="height: 2.5rem; width: auto; vertical-align: middle; margin-left: 0.5rem;">
+                </h2>
+                <p class="fade-in">
+                    Join thousands of traders who already use BLIP's intelligent insights (even though she'd rather be napping)! 
+                    From question to answer in seconds - BLIP makes trading simple and fun (with maximum cat attitude)! 😾
+                </p>
+                <div class="cta-buttons fade-in">
+                    <a href="https://twitter.com/blipai_fun" target="_blank" class="btn btn-secondary">
+                        😾 Disturb BLIP Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <div class="footer-logo">
+                        <img src="bliplogo.png" alt="BLIP AI Logo">
+                        <span class="footer-logo-text">BLIP AI</span>
+                    </div>
+                    <p style="color: var(--gray); margin-top: 0.5rem;">Powered by advanced Solana intelligence and maximum cat sass 😾</p>
+                </div>
+                <div class="social-links">
+                    <a href="https://twitter.com/blipai_fun" target="_blank" title="Twitter">🐦</a>
+                    <a href="https://t.me/blipai" target="_blank" title="Telegram">📱</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 
